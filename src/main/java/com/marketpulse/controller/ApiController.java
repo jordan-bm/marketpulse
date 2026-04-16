@@ -6,6 +6,7 @@ import com.marketpulse.model.NewsArticle;
 import com.marketpulse.model.SentimentSummary;
 import com.marketpulse.model.StockSnapshot;
 import com.marketpulse.service.NewsService;
+import com.marketpulse.service.SchedulerService;
 import com.marketpulse.service.SentimentService;
 import com.marketpulse.service.StockPriceService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class ApiController {
 
     @Autowired
     private SentimentService sentimentService;
+
+    @Autowired
+    private SchedulerService schedulerService;
 
     public ApiController(StockPriceService stockPriceService, NewsService newsService) {
         this.stockPriceService = stockPriceService;
@@ -85,6 +89,16 @@ public class ApiController {
     public ResponseEntity<?> backfill() {
         int count = sentimentService.backfillNullScores();
         return ResponseEntity.ok(Map.of("backfilled", count));
+    }
+
+    @GetMapping("/api/scheduler/status")
+    public Map<String, Object> schedulerStatus() {
+        Map<String, Object> status = new HashMap<>();
+        status.put("lastRun", schedulerService.getLastRun() != null
+                ? schedulerService.getLastRun().toString() : "Not yet run");
+        status.put("nextRun", schedulerService.getNextRun() != null
+                ? schedulerService.getNextRun().toString() : "Pending first run");
+        return status;
     }
 
     private String interpretScore(double score) {
