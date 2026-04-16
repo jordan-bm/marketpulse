@@ -60,6 +60,19 @@
     		<artifactId>thymeleaf-extras-java8time</artifactId>
     		<version>3.0.4.RELEASE</version>
 		</dependency>
+		<!-- Stanford CoreNLP — NLP engine -->
+		<dependency>
+    		<groupId>edu.stanford.nlp</groupId>
+    		<artifactId>stanford-corenlp</artifactId>
+    		<version>4.5.4</version>
+		</dependency>
+		<!-- Stanford CoreNLP English models — required for sentiment analysis -->
+		<dependency>
+    		<groupId>edu.stanford.nlp</groupId>
+    		<artifactId>stanford-corenlp</artifactId>
+    		<version>4.5.4</version>
+    		<classifier>models</classifier>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
