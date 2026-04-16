@@ -2,6 +2,12 @@
 
 package com.marketpulse.service;
 
+import com.marketpulse.model.NewsArticle;
+import com.marketpulse.model.SentimentSummary;
+import com.marketpulse.repository.NewsArticleRepository;
+import com.marketpulse.repository.SentimentSummaryRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import edu.stanford.nlp.pipeline.*;
 import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
@@ -15,6 +21,12 @@ import java.util.*;
 public class SentimentService {
 
     private StanfordCoreNLP pipeline;
+
+    @Autowired
+    private NewsArticleRepository newsArticleRepository;
+
+    @Autowired
+    private SentimentSummaryRepository sentimentSummaryRepository;
 
     // Positive financial/market terms
     private static final Set<String> POSITIVE_WORDS = new HashSet<>(Arrays.asList(
@@ -114,5 +126,52 @@ public class SentimentService {
         if (score > -0.3)  return "⏸ Hold — Sentiment Neutral";
         if (score > -0.6)  return "⚠️ Caution — Bearish Pressure";
         return "🔴 Strong Sell Signal";
+    }
+
+    /**
+     * Aggregates all scored articles for a ticker into a SentimentSummary.
+     * Saves and returns the summary.
+     */
+    public SentimentSummary calculateSummary(String ticker) {
+        List<NewsArticle> articles = newsArticleRepository.findByTickerOrderByTimestampDesc(ticker);
+
+        if (articles.isEmpty()) return null;
+
+        double total = 0.0;
+        int bullish = 0, bearish = 0, neutral = 0;
+
+        for (NewsArticle article : articles) {
+            double score = article.getSentimentScore() != null
+                    ? article.getSentimentScore()
+                    : scoreSentiment(article.getHeadline());
+            total += score;
+            if (score > 0.2)       bullish++;
+            else if (score < -0.2) bearish++;
+            else                   neutral++;
+        }
+
+        double avg = total / articles.size();
+        String recommendation = mapToRecommendation(avg);
+
+        SentimentSummary summary = new SentimentSummary(
+            ticker, avg, articles.size(), bullish, bearish, neutral, recommendation
+        );
+        sentimentSummaryRepository.save(summary);
+        return summary;
+    }
+
+    /**
+     * Backfills sentimentScore on any NewsArticle that still has null.
+     * Call once via the backfill endpoint.
+     */
+    public int backfillNullScores() {
+        List<NewsArticle> unscored = newsArticleRepository.findBySentimentScoreIsNull();
+        int count = 0;
+        for (NewsArticle article : unscored) {
+            article.setSentimentScore(scoreSentiment(article.getHeadline()));
+            newsArticleRepository.save(article);
+            count++;
+        }
+        return count;
     }
 }

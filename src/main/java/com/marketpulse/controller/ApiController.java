@@ -3,6 +3,7 @@
 package com.marketpulse.controller;
 
 import com.marketpulse.model.NewsArticle;
+import com.marketpulse.model.SentimentSummary;
 import com.marketpulse.model.StockSnapshot;
 import com.marketpulse.service.NewsService;
 import com.marketpulse.service.SentimentService;
@@ -65,6 +66,25 @@ public class ApiController {
         result.put("score", score);
         result.put("label", interpretScore(score));
         return result;
+    }
+
+    @GetMapping("/api/sentiment/{ticker}")
+    public ResponseEntity<?> getSentiment(@PathVariable String ticker) {
+        try {
+            SentimentSummary summary = sentimentService.calculateSummary(ticker.toUpperCase());
+            if (summary == null) {
+                return ResponseEntity.ok(Map.of("message", "No articles found for " + ticker));
+            }
+            return ResponseEntity.ok(summary);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/api/sentiment/backfill")
+    public ResponseEntity<?> backfill() {
+        int count = sentimentService.backfillNullScores();
+        return ResponseEntity.ok(Map.of("backfilled", count));
     }
 
     private String interpretScore(double score) {

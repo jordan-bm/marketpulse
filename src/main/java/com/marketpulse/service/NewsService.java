@@ -4,7 +4,9 @@ package com.marketpulse.service;
 
 import com.marketpulse.model.NewsArticle;
 import com.marketpulse.repository.NewsArticleRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,13 +26,16 @@ public class NewsService {
     private final NewsArticleRepository repository;
     private final RestTemplate restTemplate;
 
+    @Autowired
+    @Lazy
+    private SentimentService sentimentService;
+
     public NewsService(NewsArticleRepository repository) {
         this.repository = repository;
         this.restTemplate = new RestTemplate();
     }
 
     public List<NewsArticle> fetchAndSave(String ticker) {
-        // Finnhub expects a date range — we'll grab the last 7 days
         long now  = Instant.now().getEpochSecond();
         long week = now - (7L * 24 * 60 * 60);
 
@@ -48,10 +53,10 @@ public class NewsService {
         List<NewsArticle> saved = new ArrayList<>();
 
         for (Map<String, Object> item : response) {
-            String headline = (String) item.get("headline");
-            String source   = (String) item.get("source");
+            String headline   = (String) item.get("headline");
+            String source     = (String) item.get("source");
             String articleUrl = (String) item.get("url");
-            long   epochSec = ((Number) item.get("datetime")).longValue();
+            long   epochSec   = ((Number) item.get("datetime")).longValue();
 
             LocalDateTime timestamp = LocalDateTime.ofInstant(
                 Instant.ofEpochSecond(epochSec), ZoneId.systemDefault()
@@ -65,9 +70,12 @@ public class NewsService {
             NewsArticle article = new NewsArticle(
                 ticker.toUpperCase(), headline, source, articleUrl, timestamp
             );
+
+            // Score sentiment before saving
+            article.setSentimentScore(sentimentService.scoreSentiment(headline));
+
             saved.add(repository.save(article));
 
-            // Stop after 10 new articles
             if (saved.size() >= 10) break;
         }
 
@@ -83,6 +91,6 @@ public class NewsService {
         LocalDateTime dt = LocalDateTime.ofInstant(
             Instant.ofEpochSecond(epochSeconds), ZoneId.systemDefault()
         );
-        return dt.toLocalDate().toString(); // yields "YYYY-MM-DD"
+        return dt.toLocalDate().toString();
     }
 }

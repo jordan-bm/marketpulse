@@ -9,4 +9,5 @@ import java.util.List;
 public interface NewsArticleRepository extends MongoRepository<NewsArticle, String> {
     List<NewsArticle> findByTickerOrderByTimestampDesc(String ticker);
     boolean existsByTickerAndHeadline(String ticker, String headline);
+    List<NewsArticle> findBySentimentScoreIsNull();
 }
