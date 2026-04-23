@@ -1,316 +1,319 @@
 <!-- src/main/resources/templates/dashboard.html -->
- 
+
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>MarketPulse</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background-color: #0D1B2A;
-            color: #E0E0E0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0D1B2A;
+            color: #CBD5E1;
+            font-family: 'Courier New', Courier, monospace;
             min-height: 100vh;
         }
 
+        /* ── Header ── */
         header {
-            background-color: #0A1628;
-            border-bottom: 2px solid #1B998B;
-            padding: 16px 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid rgba(27,153,139,0.25);
+            background: rgba(13,27,42,0.95);
+            position: sticky; top: 0; z-index: 100;
         }
-
-        header h1 {
-            font-size: 1.6rem;
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 700;
             color: #1B998B;
-            letter-spacing: 2px;
-            text-transform: uppercase;
+            letter-spacing: 0.08em;
         }
+        .logo span { color: #F4C430; }
 
-        header span {
-            color: #888;
-            font-size: 0.85rem;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
-            padding: 0 24px;
-        }
-
-        .search-section {
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        .search-section h2 {
-            font-size: 1.1rem;
-            color: #888;
-            margin-bottom: 16px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
+        /* ── Search ── */
         .search-form {
             display: flex;
-            justify-content: center;
-            gap: 12px;
+            gap: 0.5rem;
         }
-
         .search-form input {
-            background: #1A2940;
-            border: 1px solid #2A3F5F;
-            color: #E0E0E0;
-            padding: 12px 20px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(27,153,139,0.4);
             border-radius: 6px;
-            font-size: 1rem;
-            width: 220px;
+            padding: 0.5rem 1rem;
+            color: #E2E8F0;
+            font-family: inherit;
+            font-size: 0.95rem;
+            width: 140px;
             text-transform: uppercase;
-            letter-spacing: 2px;
             outline: none;
             transition: border-color 0.2s;
         }
-
-        .search-form input:focus {
-            border-color: #1B998B;
-        }
-
+        .search-form input:focus { border-color: #1B998B; }
+        .search-form input::placeholder { text-transform: none; color: #475569; }
         .search-form button {
-            background-color: #1B998B;
-            color: #fff;
+            background: #1B998B;
+            color: #0D1B2A;
             border: none;
-            padding: 12px 28px;
             border-radius: 6px;
-            font-size: 1rem;
-            cursor: pointer;
-            font-weight: 600;
-            letter-spacing: 1px;
-            transition: background-color 0.2s;
-        }
-
-        .search-form button:hover {
-            background-color: #158a7d;
-        }
-
-        .error-banner {
-            background: #2a1a1a;
-            border: 1px solid #8B2020;
-            color: #ff6b6b;
-            padding: 12px 20px;
-            border-radius: 6px;
-            margin-bottom: 24px;
-            text-align: center;
-        }
-
-        .results-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-top: 8px;
-        }
-
-        .card {
-            background: #1A2940;
-            border: 1px solid #2A3F5F;
-            border-radius: 10px;
-            padding: 24px;
-        }
-
-        .card h3 {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #1B998B;
-            margin-bottom: 16px;
-            border-bottom: 1px solid #2A3F5F;
-            padding-bottom: 10px;
-        }
-
-        .price-display {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        .price-display .ticker-label {
-            font-size: 1.4rem;
+            padding: 0.5rem 1.1rem;
+            font-family: inherit;
             font-weight: 700;
-            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            transition: background 0.2s;
         }
+        .search-form button:hover { background: #22b8a8; }
 
-        .price-display .price-value {
+        /* ── Main ── */
+        main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+        /* ── Error / info banners ── */
+        .banner {
+            padding: 0.85rem 1.2rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+        .banner-error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); color: #FCA5A5; }
+        .banner-info  { background: rgba(27,153,139,0.08); border: 1px solid rgba(27,153,139,0.25); color: #5EEAD4; }
+
+        /* ── Stock card ── */
+        .stock-card {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(27,153,139,0.2);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .stock-ticker {
             font-size: 2rem;
             font-weight: 700;
             color: #1B998B;
+            letter-spacing: 0.05em;
         }
-
-        .price-meta {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 12px;
+        .stock-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #E2E8F0;
         }
-
-        .price-meta-item {
-            background: #0D1B2A;
-            border-radius: 6px;
-            padding: 10px 14px;
-        }
-
-        .price-meta-item .label {
-            font-size: 0.7rem;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 4px;
-        }
-
-        .price-meta-item .value {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #E0E0E0;
-        }
-
-        .news-list {
-            list-style: none;
+        .stock-meta {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .stock-meta-item { text-align: center; }
+        .stock-meta-item .label {
+            font-size: 0.7rem;
+            color: #475569;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        .stock-meta-item .value {
+            font-size: 1.05rem;
+            color: #94A3B8;
+            margin-top: 2px;
         }
 
+        /* ── Sentiment gauge + recommendation ── */
+        .sentiment-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .sentiment-gauge {
+            padding: 0.5rem 1.2rem;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: 0.04em;
+            min-width: 90px;
+            text-align: center;
+        }
+        .gauge-bullish { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: #4ADE80; }
+        .gauge-bearish { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: #F87171; }
+        .gauge-neutral { background: rgba(148,163,184,0.1); border: 1px solid rgba(148,163,184,0.3); color: #94A3B8; }
+
+        .recommendation-badge {
+            padding: 0.5rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background: rgba(244,196,48,0.1);
+            border: 1px solid rgba(244,196,48,0.3);
+            color: #FDE68A;
+        }
+
+        /* ── Charts ── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 720px) { .charts-grid { grid-template-columns: 1fr; } }
+
+        .chart-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        .chart-card h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #475569;
+            margin-bottom: 1rem;
+        }
+        .chart-wrapper { height: 220px; position: relative; }
+
+        /* ── Headlines ── */
+        .section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: #475569;
+            margin-bottom: 1rem;
+        }
+        .news-list { display: flex; flex-direction: column; gap: 0.6rem; }
         .news-item {
-            background: #0D1B2A;
-            border-radius: 6px;
-            padding: 12px 14px;
-            border-left: 3px solid #1B998B;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: 0.85rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
         }
-
-        .news-item a {
-            color: #E0E0E0;
-            text-decoration: none;
+        .news-item .headline {
             font-size: 0.88rem;
+            color: #CBD5E1;
             line-height: 1.4;
-            display: block;
-            margin-bottom: 6px;
-            transition: color 0.2s;
+            flex: 1;
         }
-
-        .news-item a:hover {
-            color: #1B998B;
+        .news-item .meta {
+            font-size: 0.75rem;
+            color: #475569;
+            white-space: nowrap;
         }
+        .news-item a { color: #1B998B; text-decoration: none; }
+        .news-item a:hover { text-decoration: underline; }
 
-        .news-meta {
-            font-size: 0.72rem;
-            color: #555;
-        }
-
-        .news-meta span {
-            margin-right: 10px;
-        }
-
-        .placeholder-text {
-            color: #444;
-            font-size: 0.9rem;
+        /* ── Empty state ── */
+        .empty-state {
             text-align: center;
-            padding: 40px 0;
+            padding: 4rem 2rem;
+            color: #334155;
         }
-
-        footer {
-            text-align: center;
-            padding: 32px;
-            color: #333;
-            font-size: 0.8rem;
-            margin-top: 60px;
-            border-top: 1px solid #1A2940;
-        }
+        .empty-state .big { font-size: 3rem; margin-bottom: 1rem; }
+        .empty-state p { font-size: 0.95rem; color: #475569; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>MarketPulse</h1>
-    <span>Real-Time Stock Sentiment Analyzer</span>
+    <div class="logo">Market<span>Pulse</span></div>
+    <form class="search-form" th:action="@{/dashboard}" method="get">
+        <input type="text" name="ticker" placeholder="Enter ticker…"
+               th:value="${ticker}" maxlength="6" autocomplete="off"/>
+        <button type="submit">Search</button>
+    </form>
 </header>
 
-<div class="container">
+<main>
 
-    <div class="search-section">
-        <h2>Search a Ticker</h2>
-        <form class="search-form" method="get" action="/dashboard">
-            <input type="text"
-                   name="ticker"
-                   placeholder="AAPL"
-                   th:value="${ticker}"
-                   maxlength="10" />
-            <button type="submit">Analyze</button>
-        </form>
+    <!-- Error banner -->
+    <div th:if="${error}" class="banner banner-error" th:text="${error}"></div>
+
+    <!-- Empty state — no ticker searched yet -->
+    <div th:if="${ticker == null or ticker == ''}" class="empty-state">
+        <div class="big">📈</div>
+        <p>Enter a ticker symbol above to see live price, sentiment, and charts.</p>
+        <p style="margin-top:0.5rem; font-size:0.8rem;">Try: AAPL &nbsp;·&nbsp; MSFT &nbsp;·&nbsp; GOOGL &nbsp;·&nbsp; TSLA &nbsp;·&nbsp; AMZN</p>
     </div>
 
-    <!-- Error state -->
-    <div class="error-banner" th:if="${error}">
-        <span th:text="${error}"></span>
-    </div>
+    <!-- Stock data loaded -->
+    <div th:if="${snapshot != null}">
 
-    <!-- Results (only shown when we have data) -->
-    <div class="results-grid" th:if="${snapshot}">
-
-        <!-- Stock Price Card -->
-        <div class="card">
-            <h3>Price Data</h3>
-            <div class="price-display">
-                <span class="ticker-label" th:text="${snapshot.ticker}">AAPL</span>
-                <span class="price-value" th:text="'$' + ${#numbers.formatDecimal(snapshot.price, 1, 2)}">$0.00</span>
-            </div>
-            <div class="price-meta">
-                <div class="price-meta-item">
-                    <div class="label">Day High</div>
-                    <div class="value" th:text="'$' + ${#numbers.formatDecimal(snapshot.high, 1, 2)}">$0.00</div>
+        <!-- Price card -->
+        <div class="stock-card">
+            <div class="stock-ticker" th:text="${snapshot.ticker}">AAPL</div>
+            <div class="stock-price" th:text="'$' + ${#numbers.formatDecimal(snapshot.price, 1, 2)}">$0.00</div>
+            <div class="stock-meta">
+                <div class="stock-meta-item">
+                    <div class="label">High</div>
+                    <div class="value" th:text="'$' + ${#numbers.formatDecimal(snapshot.high, 1, 2)}">—</div>
                 </div>
-                <div class="price-meta-item">
-                    <div class="label">Day Low</div>
-                    <div class="value" th:text="'$' + ${#numbers.formatDecimal(snapshot.low, 1, 2)}">$0.00</div>
+                <div class="stock-meta-item">
+                    <div class="label">Low</div>
+                    <div class="value" th:text="'$' + ${#numbers.formatDecimal(snapshot.low, 1, 2)}">—</div>
                 </div>
-                <div class="price-meta-item">
+                <div class="stock-meta-item">
                     <div class="label">Volume</div>
-                    <div class="value" th:text="${#numbers.formatInteger(snapshot.volume, 1, 'COMMA')}">0</div>
+                    <div class="value" th:text="${#numbers.formatInteger(snapshot.volume, 1, 'COMMA')}">—</div>
+                </div>
+                <div class="stock-meta-item">
+                    <div class="label">Updated</div>
+                    <div class="value" th:text="${#temporals.format(snapshot.timestamp, 'MM/dd HH:mm')}">—</div>
                 </div>
             </div>
         </div>
 
-        <!-- News Card -->
-        <div class="card">
-            <h3>Latest Headlines</h3>
-            <ul class="news-list" th:if="${articles != null and !#lists.isEmpty(articles)}">
-                <li class="news-item" th:each="article : ${articles}">
-                    <a th:href="${article.url}" th:text="${article.headline}" target="_blank">Headline</a>
-                    <div class="news-meta">
-                        <span th:text="${article.source}">Source</span>
-                        <span th:text="${#temporals.format(article.timestamp, 'MMM d, h:mm a')}">Date</span>
+        <!-- Sentiment gauge + recommendation -->
+        <div class="sentiment-row">
+            <div id="sentimentGauge" class="sentiment-gauge gauge-neutral">Loading…</div>
+            <div id="recommendationBadge" class="recommendation-badge">Loading…</div>
+        </div>
+
+        <!-- Charts -->
+        <div id="chartsSection" class="charts-grid">
+            <div class="chart-card">
+                <h3>Price History</h3>
+                <div class="chart-wrapper">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Sentiment Timeline</h3>
+                <div class="chart-wrapper">
+                    <canvas id="sentimentChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Headlines -->
+        <div th:if="${articles != null and not #lists.isEmpty(articles)}">
+            <div class="section-title">Recent Headlines</div>
+            <div class="news-list">
+                <div th:each="article : ${articles}" class="news-item">
+                    <div class="headline">
+                        <a th:href="${article.url}" th:text="${article.headline}" target="_blank">Headline</a>
+                        <div class="meta" th:text="${article.source} + ' · ' + ${#temporals.format(article.timestamp, 'MM/dd')}">Source</div>
                     </div>
-                </li>
-            </ul>
-            <p class="placeholder-text" th:if="${articles == null or #lists.isEmpty(articles)}">
-                No recent headlines found.
-            </p>
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <!-- Empty state (no search yet) -->
-    <p class="placeholder-text" th:if="${snapshot == null and error == null}">
-        Enter a ticker symbol above to see live price data and recent headlines.
-    </p>
+</main>
 
-</div>
-
-<footer>
-    Built with Java Spring Boot · MongoDB · Finnhub · Alpha Vantage
-</footer>
-
-</body>
-</html>
+<script th:src="@{/js/charts.js}"></script>
+<script th:if="${ticker != null and ticker != ''}" th:inline="javascript">
+    const ticker = /*[[${ticker}]]*/ 'AAPL';
+    initCharts(ticker);
+</script>

@@ -10,4 +10,6 @@ public interface NewsArticleRepository extends MongoRepository<NewsArticle, Stri
     List<NewsArticle> findByTickerOrderByTimestampDesc(String ticker);
     boolean existsByTickerAndHeadline(String ticker, String headline);
     List<NewsArticle> findBySentimentScoreIsNull();
+    List<NewsArticle> findTop10ByTickerOrderByTimestampDesc(String ticker);
+    List<NewsArticle> findByTickerOrderByTimestampDesc(String ticker, org.springframework.data.domain.Pageable pageable);
 }
